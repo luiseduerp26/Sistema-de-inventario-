@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Gestión de Inventario · Taller de Mecánica Inacap · Por Folio</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <!-- SheetJS (XLSX) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
+    </script>
+    <!-- JsBarcode para códigos de barras -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f7fc;
+            color: #1e293b;
+            padding: 24px 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .title-section h1 {
+            font-weight: 700;
+            font-size: 1.9rem;
+            color: #0b2b4a;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .title-section h1 i {
+            color: #2563eb;
+            background: #ffffffd0;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.02);
+            transition: transform 0.2s;
+        }
+        .title-section h1 i:hover {
+            transform: scale(1.05);
+        }
+
+        .badge-taller {
+            background: #1e3a5f;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 40px;
+            margin-left: 10px;
+        }
+
+        .stats-cards {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e9eef4;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-weight: 600;
+            transition: all 0.25s;
+        }
+        .stat-card:hover {
+            box-shadow: 0 10px 20px -8px rgba(37, 99, 235, 0.15);
+            border-color: #bdd3ff;
+        }
+        .stat-card i {
+            font-size: 1.5rem;
+            color: #2563eb;
+        }
+
+        /* Layout 2 columnas */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 2fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        /* Panel Izquierdo: Registro */
+        .panel {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 18px 35px -8px rgba(0, 0, 0, 0.08);
+            padding: 24px 22px;
+            border: 1px solid #eef2f6;
+            transition: transform 0.2s, box-shadow 0.3s;
+        }
+        .panel:hover {
+            box-shadow: 0 22px 40px -10px rgba(0, 20, 50, 0.12);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .panel-header i {
+            font-size: 1.7rem;
+            background: #eef6ff;
+            padding: 10px;
+            border-radius: 16px;
+            color: #2563eb;
+        }
+
+        .panel-header h2 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: #0f2b43;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: #475569;
+            letter-spacing: 0.3px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #dfe7ef;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            background: #fbfdff;
+            transition: all 0.15s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+            background: white;
+        }
+
+        .double-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.2s;
+            border: 1px solid #1e3a5f;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            box-shadow: 0 8px 18px -6px #2563eb80;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #1e293b;
+            border: 1.5px solid #cfdde9;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+        }
+
+        .movement-selector {
+            display: flex;
+            background: #f0f4fa;
+            border-radius: 40px;
+            padding: 5px;
+            margin: 15px 0 10px;
+        }
+
+        .movement-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .movement-option.active {
+            background: white;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+            color: #2563eb;
+        }
+
+        .movement-option i {
+            margin-right: 6px;
+        }
+
+        /* Tabla de inventario */
+        .table-wrapper {
+            background: white;
+            border-radius: 28px;
+            padding: 6px 4px 10px 10px;
+            box-shadow: 0 18px 35px -8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eef2f6;
+            overflow-x: auto;
+            animation: slideUp 0.4s;
+        }
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .table-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 15px 8px 15px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f4f9ff;
+            border-radius: 40px;
+            padding: 5px 5px 5px 20px;
+            border: 1px solid #d9e2ec;
+        }
+
+        .search-box i {
+            color: #6b7b8f;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            padding: 10px 8px;
+            width: 220px;
+        }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 1300px;
+        }
+
+        .inventory-table th {
+            text-align: left;
+            padding: 14px 8px;
+            background: #f9fcff;
+            color: #1e4460;
+            font-weight: 600;
+            border-bottom: 2px solid #cbd5e1;
+            white-space: nowrap;
+        }
+
+        .inventory-table td {
+            padding: 14px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .inventory-table tbody tr {
+            transition: background 0.15s;
+        }
+        .inventory-table tbody tr:hover {
+            background: #fafcff;
+        }
+
+        .badge-stock {
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .bg-warning {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+        .bg-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .bg-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-icon {
+            color: #5e7180;
+            margin: 0 6px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 1.1rem;
+        }
+        .action-icon:hover {
+            color: #2563eb;
+            transform: scale(1.2);
+        }
+        /* Estilo para el botón de eliminar */
+        .action-icon.delete-icon {
+            color: #dc2626;
+        }
+        .action-icon.delete-icon:hover {
+            color: #b91c1c;
+            transform: scale(1.3);
+        }
+
+        /* Sección Reportes */
+        .reports-section {
+            margin: 30px 0 20px;
+            background: white;
+            border-radius: 28px;
+            padding: 22px 25px;
+            box-shadow: 0 18px 30px -8px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e3eaf2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            animation: slideUp 0.5s;
+        }
+        .report-info h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0b2b4a;
+        }
+        .report-info p {
+            color: #475569;
+            margin-top: 4px;
+        }
+        .report-actions {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .btn-report {
+            padding: 16px 28px;
+            border-radius: 60px;
+            font-weight: 700;
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 10px 18px -6px #0f2b4350;
+            transition: 0.2s;
+        }
+        .btn-report i {
+            font-size: 1.3rem;
+        }
+        .btn-report:hover {
+            background: #143048;
+            transform: scale(1.02);
+        }
+        .btn-excel {
+            background: #1f6e43;
+            box-shadow: 0 10px 18px -6px #1f6e4380;
+        }
+        .btn-excel:hover {
+            background: #165a35;
+        }
+
+        .btn-descarga {
+            background: #7c3aed;
+            box-shadow: 0 10px 18px -6px #7c3aed80;
+        }
+        .btn-descarga:hover {
+            background: #6d28d9;
+        }
+
+        /* Historial de folios */
+        .movement-history {
+            margin-top: 20px;
+            background: white;
+            border-radius: 28px;
+            padding: 18px 20px;
+            box-shadow: 0 18px 35px -8px rgba(0, 0, 0, 0.05);
+        }
+
+        .history-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .history-filters {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .history-filters input {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            width: 180px;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .log-table th {
+            text-align: left;
+            padding: 12px 5px;
+            background: #f0f6fe;
+        }
+
+        .log-table td {
+            padding: 10px 5px;
+            border-bottom: 1px solid #e0e7ef;
+            vertical-align: top;
+        }
+
+        .herramientas-lista {
+            font-size: 0.75rem;
+            color: #475569;
+            max-width: 250px;
+        }
+
+        .herramientas-lista span {
+            display: inline-block;
+            background: #eef2ff;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin: 2px;
+            font-size: 0.7rem;
+        }
+
+        .btn-ver-folio {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .btn-ver-folio:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        .footer-note {
+            margin-top: 20px;
+            color: #5e7180;
+            font-size: 0.8rem;
+            text-align: right;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Modal para descarga de ficha */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: white;
+            border-radius: 32px;
+            padding: 24px 28px;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .modal-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+        .ficha-preview {
+            background: #f9f9fc;
+            padding: 20px 15px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px dashed #a0bbd8;
+        }
+        .ficha-codigo {
+            font-family: 'Courier New', monospace;
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 6px;
+            color: #0b2b4a;
+            margin-bottom: 8px;
+        }
+        .ficha-nombre {
+            font-family: 'Calibri', 'Inter', sans-serif;
+            font-size: 11px;
+            color: #334155;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+        #barcodeCanvas {
+            margin: 0 auto;
+            display: block;
+            max-width: 100%;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* Modal para detalle de folio */
+        .modal-folio {
+            max-width: 750px;
+            width: 95%;
+            text-align: left;
+        }
+        .folio-header {
+            background: #1e3a5f;
+            color: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            margin: -24px -28px 20px -28px;
+            text-align: center;
+        }
+        .folio-header h3 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        .info-cliente {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #bae6fd;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .detail-table th {
+            background: #e2e8f0;
+            padding: 10px;
+            text-align: left;
+        }
+        .detail-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Modal para descarga de registros */
+        .modal-descarga {
+            max-width: 650px;
+            text-align: left;
+        }
+        .modal-descarga .filtros-descarga {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .modal-descarga select,
+        .modal-descarga input {
+            margin-bottom: 0;
+        }
+        .modal-descarga .btn {
+            margin-top: 0;
+        }
+
+        /* Indicador de escaneo */
+        .barcode-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e3a5f;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Resumen de existencias */
+        .producto-lista-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .producto-lista-item:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .producto-lista-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .producto-lista-nombre {
+            font-weight: 600;
+            color: #0f2b43;
+        }
+        .producto-lista-stock {
+            font-size: 0.8rem;
+            color: #475569;
+        }
+        .producto-lista-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: #e2e8f0;
+            color: #1e293b;
+            transition: 0.2s;
+        }
+        .btn-small:hover {
+            background: #cbd5e1;
+        }
+        .btn-small.remove {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .btn-small.remove:hover {
+            background: #fecaca;
+        }
+        .resumen-existencias {
+            background: #f0f9ff;
+            border-radius: 20px;
+            padding: 16px;
+            margin: 15px 0;
+            border: 1px solid #bae6fd;
+        }
+        .resumen-titulo {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #0369a1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lista-agregados {
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Detalle movimiento */
+        .detalle-movimiento-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            animation: fadeIn 0.3s ease;
+        }
+        .detalle-movimiento-modal {
+            background: white;
+            border-radius: 28px;
+            padding: 28px 32px;
+            max-width: 650px;
+            width: 95%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+        }
+        .detalle-header {
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+        .detalle-header h3 {
+            font-size: 1.4rem;
+            color: #1e3a5f;
+            margin-bottom: 4px;
+        }
+        .detalle-header p {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .detalle-tabla {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.85rem;
+        }
+        .detalle-tabla th {
+            background: #1e3a5f;
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+        .detalle-tabla td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .detalle-tabla tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        .detalle-resumen {
+            background: #f0f9ff;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 16px 0;
+            border: 1px solid #bae6fd;
+        }
+        .detalle-resumen h4 {
+            color: #0369a1;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .detalle-firmas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .firma-campo {
+            text-align: center;
+        }
+        .firma-linea {
+            border-bottom: 1.5px solid #1e293b;
+            margin: 35px 15px 8px 15px;
+        }
+        .firma-label {
+            font-size: 0.8rem;
+            color: #475569;
+            font-weight: 500;
+        }
+        .detalle-acciones {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-imprimir {
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-imprimir:hover {
+            background: #143048;
+        }
+        .btn-copiar {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-copiar:hover {
+            background: #1d4ed8;
+        }
+        .btn-cerrar-detalle {
+            background: white;
+            color: #1e293b;
+            border: 1.5px solid #cfdde9;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-cerrar-detalle:hover {
+            background: #f1f5f9;
+        }
+        .copia-indicador {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+        /* Estilos para ticket 80mm */
+        .ticket-80mm-container {
+            width: 80mm;
+            margin: 0 auto;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #000;
+            background: #fff;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .ticket-80mm-container h2,
+        .ticket-80mm-container h3,
+        .ticket-80mm-container h4 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            margin: 0 0 4px;
+            text-align: center;
+        }
+        .ticket-80mm-container p {
+            margin: 0 0 2px;
+        }
+        .ticket-80mm-container table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0;
+            font-size: 9px;
+        }
+        .ticket-80mm-container th {
+            border-bottom: 1px dashed #000;
+            text-align: left;
+            padding: 3px 2px;
+            font-weight: 700;
+        }
+        .ticket-80mm-container td {
+            padding: 3px 2px;
+            border-bottom: 1px dotted #ccc;
+        }
+        .ticket-80mm-container .firma-linea-ticket {
+            border-top: 1px solid #000;
+            margin: 20px 0 4px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .ticket-80mm-container .total-line {
+            font-weight: 700;
+            font-size: 12px;
+            text-align: right;
+            margin: 6px 0;
+        }
+
+        /* ESTILOS DE IMPRESIÓN MEJORADOS */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            body * {
+                visibility: hidden;
+            }
+            
+            .detalle-movimiento-modal, .detalle-movimiento-modal *,
+            .modal-card.modal-folio, .modal-card.modal-folio *,
+            .ticket-80mm-container, .ticket-80mm-container *,
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            
+            .detalle-movimiento-modal, .modal-card.modal-folio {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                padding: 20px;
+                box-shadow: none;
+                border-radius: 0;
+                max-height: none;
+                overflow: visible;
+            }
+            
+            .detalle-movimiento-overlay, .modal-overlay {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                background: none;
+                backdrop-filter: none;
+                display: block !important;
+            }
+            
+            .detalle-acciones, .btn-imprimir, .btn-cerrar-detalle, .btn-copiar,
+            .no-print, .modal-actions, .detalle-acciones, .btn-ver-folio,
+            .action-icon, .btn-small, .barcode-indicator {
+                display: none !important;
+            }
+            
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+            
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .detalle-header {
+                border-bottom: 2px solid #000;
+                margin-bottom: 15px;
+            }
+            
+            .detalle-header h3, .detalle-header p, 
+            .folio-header h3, .folio-header p {
+                color: #000 !important;
+                text-shadow: none !important;
+            }
+            
+            .detalle-tabla {
+                width: 100%;
+                font-size: 12px;
+            }
+            
+            .detalle-tabla th {
+                background: #1e3a5f !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .detalle-tabla td, .detalle-tabla th {
+                padding: 8px;
+                border: 1px solid #000;
+            }
+            
+            .info-cliente {
+                border: 1px solid #000;
+                background: #f0f9ff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .detalle-firmas {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                margin-top: 40px;
+            }
+            
+            .firma-linea {
+                border-bottom: 1.5px solid #000;
+                margin: 40px 20px 8px 20px;
+            }
+            
+            .copia-indicador {
+                border: 1px solid #000;
+                padding: 4px 8px;
+            }
+            
+            .detalle-resumen {
+                border: 1px solid #000;
+                background: #f0f9ff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* MEJORAS ESPECÍFICAS PARA IMPRESORA EPSON 580NX-II ONE */
+            /* Forzar negro puro en todos los textos */
+            .detalle-movimiento-modal, .detalle-movimiento-modal *,
+            .modal-card.modal-folio, .modal-card.modal-folio *,
+            .ticket-80mm-container, .ticket-80mm-container *,
+            #printArea, #printArea * {
+                color: #000000 !important;
+                text-shadow: none !important;
+            }
+
+            /* Excepciones para elementos que necesitan mantener su color de fondo */
+            .detalle-tabla th, .folio-header {
+                color: #ffffff !important;
+            }
+
+            /* Mejorar contraste y definición de bordes */
+            .detalle-tabla, .detail-table, table {
+                border: 2px solid #000000 !important;
+            }
+
+            .detalle-tabla td, .detalle-tabla th,
+            .detail-table td, .detail-table th {
+                border: 1px solid #000000 !important;
+            }
+
+            /* Aumentar grosor de fuentes para mejor legibilidad */
+            .detalle-movimiento-modal p,
+            .detalle-movimiento-modal span,
+            .detalle-movimiento-modal div,
+            .modal-card.modal-folio p,
+            .modal-card.modal-folio span,
+            .modal-card.modal-folio div {
+                font-weight: 500 !important;
+            }
+
+            /* Forzar resolución de impresión */
+            .detalle-movimiento-modal,
+            .modal-card.modal-folio,
+            .ticket-80mm-container,
+            #printArea {
+                image-rendering: crisp-edges;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+
+            /* Ajustes específicos para códigos de barras */
+            #barcodeCanvas, canvas {
+                filter: contrast(150%) brightness(0%) !important;
+                -webkit-filter: contrast(150%) brightness(0%) !important;
+            }
+
+            /* Mejorar visibilidad de líneas de firma */
+            .firma-linea, .firma-linea-ticket {
+                border-bottom-width: 2px !important;
+            }
+
+            /* Ajuste de densidad de impresión para Epson */
+            .detalle-tabla th,
+            .folio-header,
+            .detalle-header {
+                background-color: #000000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        /* Estilos específicos para impresión de ticket 80mm */
+        @media print and (max-width: 80mm) {
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+            
+            body {
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .ticket-80mm-container {
+                width: 80mm;
+                padding: 5mm;
+                font-size: 9px;
+            }
+
+            /* Mejoras para ticket 80mm en Epson */
+            .ticket-80mm-container * {
+                color: #000000 !important;
+                text-shadow: none !important;
+            }
+
+            .ticket-80mm-container th {
+                border-bottom: 1.5px solid #000 !important;
+            }
+
+            .ticket-80mm-container td {
+                border-bottom: 1px solid #000 !important;
+            }
+            
+            .ticket-80mm-container .firma-linea-ticket {
+                border-top: 1.5px solid #000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title-section">
+                <h1>
+                    <i class="fas fa-tools"></i>
+                    Gestión de Inventario
+                    <span class="badge-taller"><i class="fas fa-hard-hat"></i> Taller de Mecánica Inacap</span>
+                </h1>
+            </div>
+            <div class="stats-cards">
+                <div class="stat-card"><i class="fas fa-boxes"></i> <span id="totalProductos">0</span> productos</div>
+                <div class="stat-card"><i class="fas fa-exclamation-triangle"></i> <span id="bajoStockCount">0</span> bajo mínimo</div>
+                <div class="stat-card"><i class="fas fa-file-signature"></i> <span id="totalFolios">0</span> folios emitidos</div>
+            </div>
+        </div>
+
+        <!-- Grid Principal -->
+        <div class="dashboard-grid">
+            <!-- Panel izquierdo: Registro -->
+            <div class="panel">
+                <div class="panel-header">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h2>Registro de material por Folio</h2>
+                </div>
+
+                <div class="movement-selector" id="movementTypeSelector">
+                    <div class="movement-option active" data-type="entrada"><i class="fas fa-arrow-down"></i> Entrada</div>
+                    <div class="movement-option" data-type="salida"><i class="fas fa-arrow-up"></i> Salida</div>
+                    <div class="movement-option" data-type="devolucion" style="flex:1.2;"><i class="fas fa-undo-alt"></i> Devolución</div>
+                </div>
+
+                <form id="movementForm">
+                    <div class="form-group" id="clienteGroup">
+                        <label><i class="fas fa-user-graduate"></i> Cliente (Docente / Estudiante)*</label>
+                        <input type="text" id="clienteNombre" placeholder="Nombre completo del docente o estudiante" required>
+                    </div>
+                    <div class="double-row">
+                        <div class="form-group">
+                            <label>Asignatura</label>
+                            <input type="text" id="asignatura" placeholder="Ej: Mecánica básica">
+                        </div>
+                        <div class="form-group">
+                            <label>Carrera</label>
+                            <input type="text" id="carrera" placeholder="Ej: Mecánica Automotriz">
+                        </div>
+                    </div>
+                    <!-- NUEVO: Campo para seleccionar folio original en devolución -->
+                    <div class="form-group" id="folioOriginalGroup" style="display:none;">
+                        <label><i class="fas fa-file-signature"></i> Folio original de salida *</label>
+                        <select id="folioOriginalSelect">
+                            <option value="">Seleccione el folio de salida...</option>
+                        </select>
+                    </div>
+                    <hr style="margin: 15px 0; border-color: #e2e8f0;">
+                    <div class="form-group">
+                        <label><i class="fas fa-qrcode"></i> Código del producto</label>
+                        <input type="text" id="codigoInput" placeholder="Escanea el código de barras o escribe..." list="codigosSugeridos" autocomplete="off">
+                        <datalist id="codigosSugeridos"></datalist>
+                    </div>
+                    <div class="double-row">
+                        <div class="form-group">
+                            <label>Material</label>
+                            <input type="text" id="materialPreview" placeholder="Se autocompleta" readonly disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Unidad</label>
+                            <input type="text" id="unidadPreview" placeholder="UN" readonly disabled>
+                        </div>
+                    </div>
+                    <div class="double-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-map-pin"></i> Ubicación (Pañol)</label>
+                            <input type="text" id="ubicacionInput" placeholder="Ej: A-3, B-10, C-1" value="A-1">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-flag"></i> Stock mínimo</label>
+                            <input type="number" id="stockMinInput" min="0" value="1" step="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Fecha de vencimiento (opcional)</label>
+                        <input type="date" id="fechaVencimientoInput">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-box-open"></i> Cantidad (entrada/salida)</label>
+                        <input type="number" id="cantidadMov" min="1" value="1" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Registrado por</label>
+                        <input type="text" id="registradoPor" placeholder="Nombre" value="Mariela Muñoz">
+                    </div>
+                    <div class="form-group">
+                        <label>Observación</label>
+                        <input type="text" id="observacion" placeholder="Opcional">
+                    </div>
+
+                    <button type="button" class="btn btn-outline" id="agregarProductoBtn">
+                        <i class="fas fa-plus-circle"></i> Agregar producto a este folio
+                    </button>
+
+                    <div class="resumen-existencias" id="resumenExistencias" style="display: none;">
+                        <div class="resumen-titulo">
+                            <i class="fas fa-clipboard-check"></i> Herramientas para este Folio (<span id="contadorProductos">0</span>)
+                        </div>
+                        <div class="lista-agregados" id="listaProductosAgregados"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i> Registrar Folio Completo
+                    </button>
+                </form>
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-outline" id="newProductBtn"><i class="fas fa-plus-circle"></i> Crear nuevo producto</button>
+                </div>
+            </div>
+
+            <!-- Panel derecho: Tabla de inventario -->
+            <div class="table-wrapper">
+                <div class="table-header-actions">
+                    <h3 style="font-weight: 600;"><i class="fas fa-table"></i> Stock actual · Materiales</h3>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar código o material...">
+                    </div>
+                </div>
+                <div style="max-height: 520px; overflow-y: auto;">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th><th>Material</th><th>Unidad</th><th>Ubicación</th><th>Stock min</th><th>Stock actual</th><th>Vencimiento</th><th>Estado</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN REPORTES -->
+        <div class="reports-section">
+            <div class="report-info">
+                <h3><i class="fas fa-chart-line" style="margin-right: 10px;"></i> Reportes y Descargas</h3>
+                <p>Rotación de inventario · Control de entradas/salidas · Historial por folio</p>
+            </div>
+            <div class="report-actions">
+                <button class="btn-report" id="generateReportBtn"><i class="fas fa-file-alt"></i> Ver resumen de rotación</button>
+                <button class="btn-report btn-excel" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Exportar Inventario</button>
+                <button class="btn-report btn-descarga" id="descargarRegistrosBtn"><i class="fas fa-download"></i> Descargar Historial</button>
+            </div>
+        </div>
+
+        <!-- Historial de movimientos POR FOLIO -->
+        <div class="movement-history">
+            <div class="history-title">
+                <i class="fas fa-history"></i> Historial de Folios (Ventas/Salidas por cliente)
+                <div class="history-filters">
+                    <input type="text" id="filtroCliente" placeholder="Filtrar por cliente...">
+                    <input type="text" id="filtroFolio" placeholder="Filtrar por folio...">
+                </div>
+            </div>
+            <div style="max-height: 350px; overflow-y: auto;">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Fecha</th>
+                            <th>Cliente (Docente/Estudiante)</th>
+                            <th>Asignatura / Carrera</th>
+                            <th>Herramientas llevadas</th>
+                            <th>Registrado por</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="folioHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="footer-note">
+            <i class="far fa-edit"></i> Los cambios se guardan en el navegador (localStorage).
+            <br><i class="fas fa-file-signature"></i> <strong>Nuevo:</strong> Cada venta/salida se registra con un folio único por cliente.
+        </div>
+    </div>
+
+    <!-- Indicador de escaneo -->
+    <div class="barcode-indicator" id="barcodeIndicator" style="display: none;">
+        <i class="fas fa-barcode"></i> <span id="scanningStatus">Escaneando...</span>
+    </div>
+
+    <!-- MODAL FICHA DESCARGA -->
+    <div class="modal-overlay" id="fichaModal">
+        <div class="modal-card">
+            <h4><i class="fas fa-qrcode"></i> Ficha de producto</h4>
+            <div class="ficha-preview" id="fichaPreview">
+                <div class="ficha-codigo" id="fichaCodigoDisplay">101</div>
+                <div class="ficha-nombre" id="fichaNombreDisplay">KIT INMOVILIZACION TRAUMA</div>
+                <canvas id="barcodeCanvas"></canvas>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="descargarFichaBtn"><i class="fas fa-download"></i> Descargar PNG</button>
+                <button class="btn btn-outline" id="cerrarModalBtn"><i class="fas fa-times"></i> Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA DETALLE DE FOLIO -->
+    <div class="modal-overlay" id="modalDetalleFolio">
+        <div class="modal-card modal-folio">
+            <div style="text-align: right;">
+                <button class="btn-small" id="cerrarDetalleFolioBtn" style="background: transparent;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="detalleFolioContent"></div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA DESCARGA DE REGISTROS -->
+    <div class="modal-overlay" id="modalDescargaRegistros">
+        <div class="modal-card modal-descarga">
+            <h4><i class="fas fa-file-download"></i> Descargar Historial de Folios</h4>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">
+                Genere un comprobante de folios emitidos.
+            </p>
+            <div class="filtros-descarga">
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> Fecha desde</label>
+                    <input type="date" id="filtroFechaDesde">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> Fecha hasta</label>
+                    <input type="date" id="filtroFechaHasta">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Cliente</label>
+                    <input type="text" id="filtroClienteModal" placeholder="Filtrar por cliente">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="generarPDFRegistros" style="margin-top:0;">
+                    <i class="fas fa-file-pdf"></i> Descargar Reporte
+                </button>
+                <button class="btn btn-outline" id="cerrarModalDescarga" style="margin-top:0;">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALLE DE MOVIMIENTO (comprobante) -->
+    <div class="detalle-movimiento-overlay" id="detalleMovimientoOverlay">
+        <div class="detalle-movimiento-modal" id="detalleMovimientoModal"></div>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ---------- ESTADO GLOBAL ----------
+            let productos = [];
+            let folios = [];
+            let movimientoActual = 'entrada';
+            let productoSeleccionadoFicha = null;
+            let barcodeTimeout = null;
+            let productosAMover = [];
+            let ultimoFolio = 0;
+
+            const datosIniciales = [{
+                codigo: '101',
+                material: 'KIT INMOVILIZACION TRAUMA A AF PREV',
+                unidad: 'UN',
+                ubicacion: 'A-1',
+                stockMin: 1,
+                stock: 5,
+                fechaVencimiento: ''
+            }, {
+                codigo: '102',
+                material: 'MALETA COMANDO DE INSIDENTES AF',
+                unidad: 'UN',
+                ubicacion: 'B-2',
+                stockMin: 2,
+                stock: 3,
+                fechaVencimiento: ''
+            }, {
+                codigo: '103',
+                material: 'CALIBRADOR DE BOMBAS DE FLUJO AF PREV',
+                unidad: 'UN',
+                ubicacion: 'C-1',
+                stockMin: 1,
+                stock: 2,
+                fechaVencimiento: '2026-12-31'
+            }, {
+                codigo: '259',
+                material: 'CARETA DE PROTECCION FACIAL',
+                unidad: 'UN',
+                ubicacion: 'B-10',
+                stockMin: 16,
+                stock: 12,
+                fechaVencimiento: ''
+            }, {
+                codigo: '503',
+                material: 'ANALIZADOR DE VIBRACIONES ADASH',
+                unidad: 'UN',
+                ubicacion: 'C-1',
+                stockMin: 1,
+                stock: 1,
+                fechaVencimiento: '2027-06-15'
+            }];
+
+            const foliosIniciales = [{
+                folio: 'FOL-001',
+                fecha: '2026-04-10',
+                cliente: 'Juan Pérez',
+                asignatura: 'Mecánica Básica',
+                carrera: 'Mecánica Automotriz',
+                registradoPor: 'Mariela Muñoz',
+                observacion: 'Práctica de taller',
+                tipo: 'salida',
+                folioOriginal: null,
+                items: [
+                    { codigo: '259', material: 'CARETA DE PROTECCION FACIAL', cantidad: 2, unidad: 'UN' },
+                    { codigo: '101', material: 'KIT INMOVILIZACION TRAUMA A AF PREV', cantidad: 1, unidad: 'UN' }
+                ]
+            }, {
+                folio: 'FOL-002',
+                fecha: '2026-04-12',
+                cliente: 'Ana González',
+                asignatura: 'Seguridad Industrial',
+                carrera: 'Prevención de Riesgos',
+                registradoPor: 'Nathalie Cid',
+                observacion: 'Clase práctica',
+                tipo: 'salida',
+                folioOriginal: null,
+                items: [
+                    { codigo: '259', material: 'CARETA DE PROTECCION FACIAL', cantidad: 1, unidad: 'UN' }
+                ]
+            }];
+
+            function estaVencido(fechaVencimiento) {
+                if (!fechaVencimiento) return false;
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const vencimiento = new Date(fechaVencimiento + 'T00:00:00');
+                return vencimiento < hoy;
+            }
+
+            function estaPorVencer(fechaVencimiento, diasAntelacion = 30) {
+                if (!fechaVencimiento) return false;
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const vencimiento = new Date(fechaVencimiento + 'T00:00:00');
+                const diferencia = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+                return diferencia <= diasAntelacion && diferencia >= 0;
+            }
+
+            function generarNuevoFolio() {
+                ultimoFolio++;
+                const numStr = String(ultimoFolio).padStart(4, '0');
+                return `FOL-${numStr}`;
+            }
+
+            function cargarDatos() {
+                const prodStorage = localStorage.getItem('inventario_mecanica_productos');
+                const foliosStorage = localStorage.getItem('inventario_mecanica_folios');
+                const ultimoFolioStorage = localStorage.getItem('inventario_mecanica_ultimoFolio');
+                if (prodStorage) productos = JSON.parse(prodStorage);
+                else productos = [...datosIniciales];
+                if (foliosStorage) folios = JSON.parse(foliosStorage);
+                else folios = [...foliosIniciales];
+                if (ultimoFolioStorage) ultimoFolio = parseInt(ultimoFolioStorage);
+                else {
+                    const maxFolio = folios.reduce((max, f) => {
+                        const num = parseInt(f.folio.replace('FOL-', ''));
+                        return num > max ? num : max;
+                    }, 0);
+                    ultimoFolio = maxFolio;
+                }
+                actualizarTablaYStats();
+                actualizarDatalist();
+                renderizarHistorialFolios();
+                actualizarSelectorFolios();
+            }
+
+            function guardarProductos() {
+                localStorage.setItem('inventario_mecanica_productos', JSON.stringify(productos));
+            }
+
+            function guardarFolios() {
+                localStorage.setItem('inventario_mecanica_folios', JSON.stringify(folios));
+                localStorage.setItem('inventario_mecanica_ultimoFolio', ultimoFolio.toString());
+                renderizarHistorialFolios();
+                actualizarStatsFolios();
+                actualizarSelectorFolios();
+            }
+
+            function actualizarStatsFolios() {
+                document.getElementById('totalFolios').innerText = folios.length;
+            }
+
+            function actualizarDatalist() {
+                const datalist = document.getElementById('codigosSugeridos');
+                datalist.innerHTML = '';
+                productos.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.codigo;
+                    opt.textContent = `${p.codigo} - ${p.material}`;
+                    datalist.appendChild(opt);
+                });
+            }
+
+            // NUEVO: Actualizar selector de folios para devolución
+            function actualizarSelectorFolios() {
+                const select = document.getElementById('folioOriginalSelect');
+                if (!select) return;
+                const foliosSalida = folios.filter(f => f.tipo === 'salida' || (!f.tipo && f.items && f.items.length > 0));
+                select.innerHTML = '<option value="">Seleccione el folio de salida...</option>';
+                foliosSalida.sort((a, b) => b.fecha.localeCompare(a.fecha)).forEach(folio => {
+                    const option = document.createElement('option');
+                    option.value = folio.folio;
+                    option.textContent = `${folio.folio} - ${folio.cliente} (${folio.fecha})`;
+                    select.appendChild(option);
+                });
+            }
+
+            // NUEVO: Cargar datos del folio seleccionado para devolución
+            function cargarDatosFolioDevolucion(folioId) {
+                if (!folioId) return;
+                const folio = folios.find(f => f.folio === folioId);
+                if (!folio) return;
+                document.getElementById('clienteNombre').value = folio.cliente || '';
+                document.getElementById('asignatura').value = folio.asignatura || '';
+                document.getElementById('carrera').value = folio.carrera || '';
+                document.getElementById('registradoPor').value = folio.registradoPor || 'Mariela Muñoz';
+                document.getElementById('observacion').value = `Devolución de folio ${folio.folio}`;
+            }
+
+            // Función para eliminar un producto
+            window.eliminarProducto = function(codigo) {
+                if (confirm(`¿Está seguro de eliminar el producto ${codigo}? Esta acción no se puede deshacer.`)) {
+                    productos = productos.filter(p => p.codigo !== codigo);
+                    guardarProductos();
+                    actualizarTablaYStats();
+                    actualizarDatalist();
+                }
+            };
+
+            function renderTabla(filtro = '') {
+                const tbody = document.getElementById('inventoryBody');
+                const term = filtro.toLowerCase();
+                const filtrados = productos.filter(p => p.codigo.toLowerCase().includes(term) || p.material
+                    .toLowerCase().includes(term));
+                tbody.innerHTML = '';
+                filtrados.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
+                filtrados.forEach(prod => {
+                    const tr = document.createElement('tr');
+                    let estadoStock = prod.stock <= prod.stockMin ? (prod.stock === 0 ? 'danger' : 'warning') :
+                        'success';
+                    let estadoTexto = prod.stock <= prod.stockMin ? (prod.stock === 0 ? 'Agotado' : 'Bajo mín') :
+                        'Suficiente';
+                    if (estaVencido(prod.fechaVencimiento)) {
+                        estadoStock = 'danger';
+                        estadoTexto = 'VENCIDO';
+                    } else if (estaPorVencer(prod.fechaVencimiento)) {
+                        if (estadoStock === 'success') estadoStock = 'warning';
+                        estadoTexto = estadoStock === 'danger' ? estadoTexto : 'Por vencer';
+                    }
+                    const badgeClass = estadoStock === 'danger' ? 'bg-danger' : (estadoStock === 'warning' ?
+                        'bg-warning' : 'bg-success');
+                    let fechaVencimientoDisplay = '—';
+                    if (prod.fechaVencimiento) {
+                        const fecha = new Date(prod.fechaVencimiento + 'T00:00:00');
+                        fechaVencimientoDisplay = fecha.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit',
+                            year: 'numeric' });
+                    }
+                    tr.innerHTML = `
+                        <td><strong>${prod.codigo}</strong></td>
+                        <td>${prod.material}</td>
+                        <td>${prod.unidad}</td>
+                        <td>${prod.ubicacion || '—'}</td>
+                        <td>${prod.stockMin}</td>
+                        <td><strong>${prod.stock}</strong></td>
+                        <td>${fechaVencimientoDisplay}</td>
+                        <td><span class="badge-stock ${badgeClass}">${estadoTexto}</span></td>
+                        <td>
+                            <i class="fas fa-pen action-icon" onclick="editarProducto('${prod.codigo}')" title="Editar producto"></i>
+                            <i class="fas fa-arrow-down action-icon" onclick="cargarMovimientoRapido('${prod.codigo}', 'entrada')" title="Registrar entrada"></i>
+                            <i class="fas fa-arrow-up action-icon" onclick="cargarMovimientoRapido('${prod.codigo}', 'salida')" title="Registrar salida"></i>
+                            <i class="fas fa-undo-alt action-icon" onclick="cargarMovimientoRapido('${prod.codigo}', 'devolucion')" title="Registrar devolución" style="color:#7c3aed;"></i>
+                            <i class="fas fa-print action-icon" onclick="mostrarFichaProducto('${prod.codigo}')" title="Descargar ficha"></i>
+                            <i class="fas fa-trash-alt action-icon delete-icon" onclick="eliminarProducto('${prod.codigo}')" title="Eliminar producto"></i>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('totalProductos').innerText = productos.length;
+                document.getElementById('bajoStockCount').innerText = productos.filter(p => p.stock <= p.stockMin)
+                    .length;
+            }
+
+            function renderizarHistorialFolios() {
+                const tbody = document.getElementById('folioHistoryBody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                const foliosOrdenados = [...folios].sort((a, b) => b.fecha.localeCompare(a.fecha));
+                const filtroCliente = document.getElementById('filtroCliente')?.value.toLowerCase() || '';
+                const filtroFolio = document.getElementById('filtroFolio')?.value.toLowerCase() || '';
+                const foliosFiltrados = foliosOrdenados.filter(f => {
+                    if (filtroCliente && !f.cliente.toLowerCase().includes(filtroCliente)) return false;
+                    if (filtroFolio && !f.folio.toLowerCase().includes(filtroFolio)) return false;
+                    return true;
+                });
+                foliosFiltrados.forEach(folio => {
+                    const tr = document.createElement('tr');
+                    let herramientasHtml = '<div class="herramientas-lista">';
+                    folio.items.forEach(item => {
+                        herramientasHtml +=
+                            `<span>${item.codigo}: ${item.material?.substring(0, 20) || item.codigo} (${item.cantidad})</span>`;
+                    });
+                    herramientasHtml += '</div>';
+                    const tipoBadge = folio.tipo === 'devolucion' ? 
+                        '<span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;">DEVOLUCIÓN</span>' : 
+                        '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;">SALIDA</span>';
+                    tr.innerHTML = `
+                        <td><strong>${folio.folio}</strong> ${tipoBadge}</td>
+                        <td>${folio.fecha}</td>
+                        <td><strong>${folio.cliente}</strong></td>
+                        <td>${folio.asignatura || '—'} / ${folio.carrera || '—'}</td>
+                        <td>${herramientasHtml}</td>
+                        <td>${folio.registradoPor || '—'}</td>
+                        <td>
+                            <button class="btn-ver-folio" onclick="verDetalleFolio('${folio.folio}')">
+                                <i class="fas fa-eye"></i> Ver detalle
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                actualizarStatsFolios();
+            }
+
+            window.verDetalleFolio = function(folioId) {
+                const folio = folios.find(f => f.folio === folioId);
+                if (!folio) return;
+                let itemsHtml = '';
+                folio.items.forEach((item, idx) => {
+                    itemsHtml += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${item.codigo}</td>
+                            <td>${item.material || '—'}</td>
+                            <td>${item.cantidad}</td>
+                            <td>${item.unidad || 'UN'}</td>
+                        </tr>
+                    `;
+                });
+                const fechaFormateada = new Date(folio.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                });
+                const tipoMovimiento = folio.tipo === 'devolucion' ? 'DEVOLUCIÓN' : 'SALIDA';
+                const folioOriginalInfo = folio.folioOriginal ? 
+                    `<p><strong>Folio original de salida:</strong> ${folio.folioOriginal}</p>` : '';
+                const content = `
+                    <div class="folio-header" style="background: ${folio.tipo === 'devolucion' ? '#7c3aed' : '#1e3a5f'};">
+                        <h3><i class="fas ${folio.tipo === 'devolucion' ? 'fa-undo-alt' : 'fa-file-signature'}"></i> ${folio.folio}</h3>
+                        <p>${fechaFormateada} | <strong>${tipoMovimiento}</strong></p>
+                    </div>
+                    <div class="info-cliente" style="border-color: ${folio.tipo === 'devolucion' ? '#c4b5fd' : '#bae6fd'};">
+                        <h4><i class="fas fa-user-graduate"></i> Datos del Cliente</h4>
+                        <p><strong>Nombre:</strong> ${folio.cliente}</p>
+                        <p><strong>Asignatura:</strong> ${folio.asignatura || '—'}</p>
+                        <p><strong>Carrera:</strong> ${folio.carrera || '—'}</p>
+                        <p><strong>Registrado por:</strong> ${folio.registradoPor || '—'}</p>
+                        <p><strong>Observación:</strong> ${folio.observacion || '—'}</p>
+                        ${folioOriginalInfo}
+                    </div>
+                    <h4><i class="fas fa-tools"></i> Herramientas / Materiales ${folio.tipo === 'devolucion' ? 'devueltos' : 'llevados'}</h4>
+                    <table class="detail-table">
+                        <thead><tr><th>#</th><th>Código</th><th>Material</th><th>Cantidad</th><th>Unidad</th></tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    <div class="detalle-firmas">
+                        <div class="firma-campo">
+                            <div class="firma-linea"></div>
+                            <div class="firma-label">
+                                <strong>Firma Cliente (Docente/Estudiante)</strong><br>${folio.cliente}
+                            </div>
+                        </div>
+                        <div class="firma-campo">
+                            <div class="firma-linea"></div>
+                            <div class="firma-label">
+                                <strong>Firma Encargado de Inventario</strong><br>${folio.registradoPor || 'Encargado'}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn-imprimir" onclick="imprimirTicket80mm('${folio.folio}')">
+                            <i class="fas fa-print"></i> Imprimir Ticket 80mm
+                        </button>
+                        <button class="btn-imprimir" onclick="imprimirReporte80mm('${folio.folio}')">
+                            <i class="fas fa-file-alt"></i> Reporte 80mm
+                        </button>
+                    </div>
+                    <div style="margin-top: 20px; text-align: center; font-size: 0.8rem; color: #666;">
+                        <i class="fas fa-print"></i> Comprobante generado por el sistema de inventario Inacap
+                    </div>
+                `;
+                document.getElementById('detalleFolioContent').innerHTML = content;
+                document.getElementById('modalDetalleFolio').style.display = 'flex';
+            };
+
+            // Nueva función para imprimir ticket 80mm
+            window.imprimirTicket80mm = function(folioId) {
+                const folio = folios.find(f => f.folio === folioId);
+                if (!folio) return;
+                const fechaFolio = new Date(folio.fecha + 'T00:00:00').toLocaleDateString('es-CL');
+                const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+                const tipoMovimiento = folio.tipo === 'devolucion' ? 'DEVOLUCIÓN' : 'RETIRO';
+                let itemsHtml = '';
+                folio.items.forEach((item, idx) => {
+                    itemsHtml += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${item.codigo} - ${item.material || ''}</td>
+                            <td style="text-align:center;">${item.cantidad}</td>
+                            <td style="text-align:center;">${item.unidad || 'UN'}</td>
+                        </tr>`;
+                });
+                const ventana = window.open('', 'Ticket80mm', 'width=320,height=600');
+                ventana.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head><meta charset="UTF-8"><title>Ticket ${folio.folio}</title>
+                    <style>
+                        @page { size: 80mm auto; margin: 0; }
+                        @media print {
+                            body { width: 80mm; margin: 0 auto; font-family: 'Courier New', monospace; font-size: 10px; background: #fff; color: #000; padding: 8px; box-sizing: border-box; }
+                            .no-print { display: none; }
+                            table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 9px; page-break-inside: avoid; }
+                            th { border-bottom: 1px dashed #000; text-align: left; padding: 3px 2px; font-weight: 700; }
+                            td { padding: 3px 2px; border-bottom: 1px dotted #ccc; word-break: break-word; }
+                            .firma-linea { border-top: 1px solid #000; margin: 20px 0 4px; width: 80%; margin-left: auto; margin-right: auto; }
+                            .total { font-weight: 700; font-size: 12px; text-align: right; margin: 6px 0; }
+                            h2, h3 { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; text-align: center; margin: 0 0 4px; }
+                            p { margin: 0 0 2px; font-size: 9px; }
+                        }
+                        body { width: 80mm; margin: 0 auto; font-family: 'Courier New', monospace; font-size: 10px; background: #fff; color: #000; padding: 8px; box-sizing: border-box; }
+                        h2, h3 { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; text-align: center; margin: 0 0 4px; }
+                        p { margin: 0 0 2px; }
+                        table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 9px; }
+                        th { border-bottom: 1px dashed #000; text-align: left; padding: 3px 2px; font-weight: 700; }
+                        td { padding: 3px 2px; border-bottom: 1px dotted #ccc; }
+                        .firma-linea { border-top: 1px solid #000; margin: 20px 0 4px; width: 80%; margin-left: auto; margin-right: auto; }
+                        .total { font-weight: 700; font-size: 12px; text-align: right; margin: 6px 0; }
+                        .btn-imprimir { background: #1e3a5f; color: white; border: none; padding: 8px 16px; margin: 10px auto; display: block; border-radius: 20px; cursor: pointer; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                    </head>
+                    <body>
+                        <div class="no-print" style="text-align:center;"><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir</button></div>
+                        <div class="ticket-80mm-container">
+                            <h2>TALLER DE MECÁNICA INACAP</h2>
+                            <p style="text-align:center;">Comprobante de ${tipoMovimiento}</p>
+                            <p><strong>Folio:</strong> ${folio.folio}</p>
+                            <p><strong>Fecha:</strong> ${fechaFolio} ${horaActual}</p>
+                            <p><strong>Cliente:</strong> ${folio.cliente}</p>
+                            <p><strong>Asignatura:</strong> ${folio.asignatura || '—'}</p>
+                            <p><strong>Carrera:</strong> ${folio.carrera || '—'}</p>
+                            ${folio.folioOriginal ? `<p><strong>Folio Original:</strong> ${folio.folioOriginal}</p>` : ''}
+                            <table>
+                                <thead><tr><th>#</th><th>Material</th><th>Cant</th><th>Unid</th></tr></thead>
+                                <tbody>${itemsHtml}</tbody>
+                            </table>
+                            <div class="total">Total items: ${folio.items.length}</div>
+                            <p><strong>Registrado por:</strong> ${folio.registradoPor || '—'}</p>
+                            ${folio.observacion ? `<p><strong>Obs:</strong> ${folio.observacion}</p>` : ''}
+                            <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                                <div style="text-align:center; width:45%;">
+                                    <div class="firma-linea"></div>
+                                    <small>Firma Cliente</small>
+                                </div>
+                                <div style="text-align:center; width:45%;">
+                                    <div class="firma-linea"></div>
+                                    <small>Firma Encargado</small>
+                                </div>
+                            </div>
+                            <p style="text-align:center; margin-top:12px;">--- COPIA CLIENTE ---</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                ventana.document.close();
+            };
+
+            // NUEVA FUNCIÓN: Reporte 80mm que coincide con los detalles
+            window.imprimirReporte80mm = function(folioId) {
+                const folio = folios.find(f => f.folio === folioId);
+                if (!folio) return;
+                const fechaFolio = new Date(folio.fecha + 'T00:00:00').toLocaleDateString('es-CL');
+                const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+                const tipoMovimiento = folio.tipo === 'devolucion' ? 'DEVOLUCIÓN' : 'RETIRO';
+                let itemsHtml = '';
+                folio.items.forEach((item, idx) => {
+                    itemsHtml += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${item.codigo}</td>
+                            <td>${item.material || ''}</td>
+                            <td style="text-align:center;">${item.cantidad}</td>
+                            <td style="text-align:center;">${item.unidad || 'UN'}</td>
+                        </tr>`;
+                });
+                const ventana = window.open('', 'Reporte80mm', 'width=320,height=600');
+                ventana.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head><meta charset="UTF-8"><title>Reporte ${folio.folio}</title>
+                    <style>
+                        @page { size: 80mm auto; margin: 0; }
+                        @media print {
+                            body { width: 80mm; margin: 0 auto; font-family: 'Courier New', monospace; font-size: 9px; background: #fff; color: #000; padding: 5mm; box-sizing: border-box; }
+                            .no-print { display: none; }
+                            h2 { font-size: 12px; text-align: center; margin: 0 0 3mm; }
+                            h3 { font-size: 10px; text-align: center; margin: 0 0 2mm; }
+                            .info-line { margin: 0 0 1mm; font-size: 9px; }
+                            table { width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 8px; page-break-inside: avoid; }
+                            th { border-bottom: 1px solid #000; text-align: left; padding: 2px; font-weight: 700; background: #f0f0f0; }
+                            td { padding: 2px; border-bottom: 1px dotted #ccc; word-break: break-word; }
+                            .firma-linea { border-top: 1px solid #000; margin: 15px 0 3px; width: 70%; margin-left: auto; margin-right: auto; }
+                            .total { font-weight: 700; font-size: 10px; text-align: right; margin: 3mm 0; }
+                            .separador { border-top: 1px dashed #000; margin: 5mm 0; }
+                        }
+                        body { width: 80mm; margin: 0 auto; font-family: 'Courier New', monospace; font-size: 9px; background: #fff; color: #000; padding: 5mm; box-sizing: border-box; }
+                        h2 { font-size: 12px; text-align: center; margin: 0 0 3mm; }
+                        h3 { font-size: 10px; text-align: center; margin: 0 0 2mm; }
+                        .info-line { margin: 0 0 1mm; font-size: 9px; }
+                        table { width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 8px; }
+                        th { border-bottom: 1px solid #000; text-align: left; padding: 2px; font-weight: 700; background: #f0f0f0; }
+                        td { padding: 2px; border-bottom: 1px dotted #ccc; }
+                        .firma-linea { border-top: 1px solid #000; margin: 15px 0 3px; width: 70%; margin-left: auto; margin-right: auto; }
+                        .total { font-weight: 700; font-size: 10px; text-align: right; margin: 3mm 0; }
+                        .separador { border-top: 1px dashed #000; margin: 5mm 0; }
+                        .btn-imprimir { background: #1e3a5f; color: white; border: none; padding: 8px 16px; margin: 10px auto; display: block; border-radius: 20px; cursor: pointer; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                    </head>
+                    <body>
+                        <div class="no-print" style="text-align:center;"><button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Reporte</button></div>
+                        <h2>TALLER DE MECÁNICA INACAP</h2>
+                        <h3>REPORTE DE ${tipoMovimiento} DE MATERIALES</h3>
+                        <p class="info-line"><strong>Folio:</strong> ${folio.folio}</p>
+                        <p class="info-line"><strong>Fecha:</strong> ${fechaFolio} ${horaActual}</p>
+                        <p class="info-line"><strong>Cliente:</strong> ${folio.cliente}</p>
+                        <p class="info-line"><strong>Asignatura:</strong> ${folio.asignatura || '—'}</p>
+                        <p class="info-line"><strong>Carrera:</strong> ${folio.carrera || '—'}</p>
+                        <p class="info-line"><strong>Registrado por:</strong> ${folio.registradoPor || '—'}</p>
+                        ${folio.folioOriginal ? `<p class="info-line"><strong>Folio Original:</strong> ${folio.folioOriginal}</p>` : ''}
+                        ${folio.observacion ? `<p class="info-line"><strong>Obs:</strong> ${folio.observacion}</p>` : ''}
+                        <div class="separador"></div>
+                        <table>
+                            <thead><tr><th>#</th><th>Código</th><th>Material</th><th>Cant</th><th>Unid</th></tr></thead>
+                            <tbody>${itemsHtml}</tbody>
+                        </table>
+                        <div class="total">Total items: ${folio.items.length}</div>
+                        <div class="separador"></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:5mm;">
+                            <div style="text-align:center; width:45%;">
+                                <div class="firma-linea"></div>
+                                <small>Firma Cliente</small>
+                                <br><small>${folio.cliente}</small>
+                            </div>
+                            <div style="text-align:center; width:45%;">
+                                <div class="firma-linea"></div>
+                                <small>Firma Encargado</small>
+                                <br><small>${folio.registradoPor || 'Encargado'}</small>
+                            </div>
+                        </div>
+                        <p style="text-align:center; margin-top:5mm; font-size:8px;">Documento válido como comprobante</p>
+                        <p style="text-align:center; font-size:8px;">Inacap © ${new Date().getFullYear()}</p>
+                    </body>
+                    </html>
+                `);
+                ventana.document.close();
+            };
+
+            function actualizarPreview(codigo) {
+                const prod = productos.find(p => p.codigo === codigo);
+                if (prod) {
+                    document.getElementById('materialPreview').value = prod.material;
+                    document.getElementById('unidadPreview').value = prod.unidad;
+                    document.getElementById('ubicacionInput').value = prod.ubicacion || '';
+                    document.getElementById('stockMinInput').value = prod.stockMin;
+                    document.getElementById('fechaVencimientoInput').value = prod.fechaVencimiento || '';
+                    const codigoInput = document.getElementById('codigoInput');
+                    codigoInput.style.borderColor = '#22c55e';
+                    setTimeout(() => { codigoInput.style.borderColor = '#dfe7ef'; }, 1000);
+                } else {
+                    document.getElementById('materialPreview').value = '';
+                    document.getElementById('unidadPreview').value = '';
+                    if (codigo && codigo.trim() !== '') {
+                        document.getElementById('codigoInput').style.borderColor = '#ef4444';
+                        setTimeout(() => { document.getElementById('codigoInput').style.borderColor = '#dfe7ef'; },
+                            1000);
+                    }
+                }
+            }
+
+            function handleBarcodeScan(codigoEscaneado) {
+                const codigo = codigoEscaneado.trim();
+                if (codigo === '') return;
+                const activeElement = document.activeElement;
+                const esCampoTexto = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+                const esCampoCodigo = activeElement && activeElement.id === 'codigoInput';
+                
+                if (esCampoCodigo) {
+                    return;
+                }
+                
+                if (esCampoTexto && !esCampoCodigo) {
+                    return;
+                }
+                
+                const productoEncontrado = productos.find(p => p.codigo === codigo);
+                if (productoEncontrado) {
+                    document.getElementById('codigoInput').value = codigo;
+                    actualizarPreview(codigo);
+                    const indicator = document.getElementById('barcodeIndicator');
+                    const statusSpan = document.getElementById('scanningStatus');
+                    statusSpan.innerHTML = '✓ Producto encontrado: ' + productoEncontrado.material.substring(0, 30);
+                    indicator.style.display = 'flex';
+                    indicator.style.background = '#22c55e';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                        indicator.style.background = '#1e3a5f';
+                    }, 2000);
+                    document.getElementById('cantidadMov').focus();
+                } else {
+                    const indicator = document.getElementById('barcodeIndicator');
+                    const statusSpan = document.getElementById('scanningStatus');
+                    statusSpan.innerHTML = '✗ Producto no encontrado. Código: ' + codigo;
+                    indicator.style.display = 'flex';
+                    indicator.style.background = '#dc2626';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                        indicator.style.background = '#1e3a5f';
+                    }, 2500);
+                    document.getElementById('codigoInput').value = codigo;
+                    document.getElementById('codigoInput').style.borderColor = '#ef4444';
+                    setTimeout(() => { document.getElementById('codigoInput').style.borderColor = '#dfe7ef'; }, 2000);
+                }
+            }
+
+            function setupBarcodeListener() {
+                let barcodeBuffer = '';
+                let lastKeyTime = 0;
+                document.addEventListener('keydown', function(e) {
+                    const now = Date.now();
+                    if (now - lastKeyTime > 100) {
+                        if (now - lastKeyTime > 300) barcodeBuffer = '';
+                    }
+                    if (e.key.length === 1 && e.key !== 'Enter') {
+                        barcodeBuffer += e.key;
+                        lastKeyTime = now;
+                        if (barcodeTimeout) clearTimeout(barcodeTimeout);
+                        barcodeTimeout = setTimeout(() => {
+                            if (barcodeBuffer.length > 0) {
+                                handleBarcodeScan(barcodeBuffer);
+                                barcodeBuffer = '';
+                            }
+                        }, 50);
+                    } else if (e.key === 'Enter' && barcodeBuffer.length > 0) {
+                        e.preventDefault();
+                        handleBarcodeScan(barcodeBuffer);
+                        barcodeBuffer = '';
+                        if (barcodeTimeout) clearTimeout(barcodeTimeout);
+                    }
+                });
+            }
+
+            function mostrarComprobanteFolio(folio) {
+                const modal = document.getElementById('detalleMovimientoModal');
+                const overlay = document.getElementById('detalleMovimientoOverlay');
+                const fechaGeneracion = new Date().toLocaleDateString('es-CL', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                let itemsHtml = '';
+                let totalCantidad = 0;
+                folio.items.forEach((item, idx) => {
+                    totalCantidad += item.cantidad;
+                    itemsHtml += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td><strong>${item.codigo}</strong></td>
+                            <td>${item.material || '—'}</td>
+                            <td>${item.cantidad}</td>
+                            <td>${item.unidad || 'UN'}</td>
+                        </tr>
+                    `;
+                });
+                const fechaFolio = new Date(folio.fecha + 'T00:00:00').toLocaleDateString('es-CL');
+                const tipoMovimiento = folio.tipo === 'devolucion' ? 'DEVOLUCIÓN DE MATERIALES' : 'RETIRO DE MATERIALES';
+                const iconoMovimiento = folio.tipo === 'devolucion' ? 'fa-undo-alt' : 'fa-box-open';
+                const colorHeader = folio.tipo === 'devolucion' ? '#7c3aed' : '#1e3a5f';
+                const detalleHTML = `
+                    <div class="detalle-header" style="border-bottom-color: ${colorHeader};">
+                        <h3 style="color: ${colorHeader};">📋 COMPROBANTE DE ${tipoMovimiento}</h3>
+                        <p><strong>Taller de Mecánica Inacap</strong></p>
+                        <p><strong>Folio N°:</strong> ${folio.folio}</p>
+                        <p><strong>Fecha de emisión:</strong> ${fechaGeneracion}</p>
+                        <p><strong>Fecha de ${folio.tipo === 'devolucion' ? 'devolución' : 'retiro'}:</strong> ${fechaFolio}</p>
+                        ${folio.folioOriginal ? `<p><strong>Folio original de salida:</strong> ${folio.folioOriginal}</p>` : ''}
+                    </div>
+                    <div style="background: #f0f9ff; border-radius: 16px; padding: 16px; margin-bottom: 20px; border: 1px solid #bae6fd;">
+                        <h4 style="color: #0369a1; margin-bottom: 12px;"><i class="fas fa-user-graduate"></i> Datos del Cliente</h4>
+                        <table style="width: 100%; font-size: 0.85rem;">
+                            <tr><td style="padding: 4px 8px; font-weight: 600; width: 140px;">Nombre:</td><td>${folio.cliente}</td></tr>
+                            <tr><td style="padding: 4px 8px; font-weight: 600;">Asignatura:</td><td>${folio.asignatura || '—'}</td></tr>
+                            <tr><td style="padding: 4px 8px; font-weight: 600;">Carrera:</td><td>${folio.carrera || '—'}</td></tr>
+                            <tr><td style="padding: 4px 8px; font-weight: 600;">Registrado por:</td><td>${folio.registradoPor || '—'}</td></tr>
+                        </table>
+                    </div>
+                    <h4 style="margin-bottom: 12px;"><i class="fas ${iconoMovimiento}"></i> Materiales ${folio.tipo === 'devolucion' ? 'devueltos' : 'retirados'}</h4>
+                    <table class="detalle-tabla">
+                        <thead><tr><th>#</th><th>Código</th><th>Material</th><th>Cantidad</th><th>Unidad</th></tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    <div class="detalle-resumen">
+                        <h4><i class="fas fa-calculator"></i> Resumen</h4>
+                        <p><strong>Total de productos:</strong> ${folio.items.length}</p>
+                        <p><strong>Cantidad total de unidades:</strong> ${totalCantidad}</p>
+                        ${folio.observacion ? `<p><strong>Observación:</strong> ${folio.observacion}</p>` : ''}
+                    </div>
+                    <div class="detalle-firmas">
+                        <div class="firma-campo">
+                            <div class="firma-linea"></div>
+                            <div class="firma-label">
+                                <strong>Firma Cliente (Docente/Estudiante)</strong><br>${folio.cliente}
+                            </div>
+                        </div>
+                        <div class="firma-campo">
+                            <div class="firma-linea"></div>
+                            <div class="firma-label">
+                                <strong>Firma Encargado de Taller</strong><br>${folio.registradoPor || 'Encargado'}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; padding: 12px; background: #fef9c3; border-radius: 12px;">
+                        <p style="margin: 0; font-size: 0.8rem;">
+                            <i class="fas fa-print"></i> 
+                            <strong>Se requieren DOS COPIAS:</strong> 
+                            <span class="copia-indicador">Copia 1: Cliente</span> 
+                            <span class="copia-indicador">Copia 2: Respaldo Taller</span>
+                        </p>
+                    </div>
+                    <div class="detalle-acciones">
+                        <button class="btn-imprimir" onclick="imprimirComprobanteFolio()">
+                            <i class="fas fa-print"></i> Imprimir Comprobante
+                        </button>
+                        <button class="btn-imprimir" onclick="imprimirTicket80mm('${folio.folio}')">
+                            <i class="fas fa-ticket-alt"></i> Ticket 80mm
+                        </button>
+                        <button class="btn-imprimir" onclick="imprimirReporte80mm('${folio.folio}')">
+                            <i class="fas fa-file-alt"></i> Reporte 80mm
+                        </button>
+                        <button class="btn-cerrar-detalle" onclick="cerrarDetalleMovimiento()">
+                            <i class="fas fa-times"></i> Cerrar
+                        </button>
+                    </div>
+                `;
+                modal.innerHTML = detalleHTML;
+                overlay.style.display = 'flex';
+                window._comprobanteFolioActual = folio;
+            }
+
+            window.imprimirComprobanteFolio = function() {
+                const folio = window._comprobanteFolioActual;
+                if (!folio) return;
+                let itemsHtml = '';
+                folio.items.forEach((item, idx) => {
+                    itemsHtml += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${item.codigo}</td>
+                            <td>${item.material || '—'}</td>
+                            <td>${item.cantidad}</td>
+                            <td>${item.unidad || 'UN'}</td>
+                        </tr>
+                    `;
+                });
+                const fechaGeneracion = new Date().toLocaleDateString('es-CL');
+                const fechaFolio = new Date(folio.fecha + 'T00:00:00').toLocaleDateString('es-CL');
+                const tipoMovimiento = folio.tipo === 'devolucion' ? 'DEVOLUCIÓN' : 'RETIRO';
+                const ventanaImpresion = window.open('', '_blank', 'width=800,height=600');
+                ventanaImpresion.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Comprobante Folio ${folio.folio}</title>
+                        <style>
+                            @media print {
+                                body { margin: 0; padding: 20px; }
+                                .no-print { display: none; }
+                                .page-break { page-break-after: always; }
+                                table { page-break-inside: avoid; }
+                                th { background-color: #1e3a5f !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                                .info-cliente { background-color: #f0f9ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                                .copia-cliente, .copia-respaldo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            }
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .header { text-align: center; border-bottom: 2px solid #1e3a5f; padding-bottom: 15px; margin-bottom: 20px; }
+                            .header h1 { color: #1e3a5f; margin: 0; }
+                            .info-cliente { background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bae6fd; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th { background: #1e3a5f; color: white; padding: 10px; text-align: left; }
+                            td { padding: 8px; border-bottom: 1px solid #ddd; }
+                            .firmas { display: flex; justify-content: space-between; margin-top: 40px; }
+                            .firma { text-align: center; width: 45%; }
+                            .firma-linea { border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; }
+                            .copia-cliente { background: #dbeafe; padding: 10px; text-align: center; margin-bottom: 20px; font-weight: bold; border: 2px solid #93c5fd; }
+                            .copia-respaldo { background: #fef2f2; padding: 10px; text-align: center; margin-bottom: 20px; font-weight: bold; border: 2px solid #fca5a5; }
+                            .page-break { page-break-after: always; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="no-print" style="margin-bottom: 20px;">
+                            <button onclick="window.print()" style="padding: 10px 20px; background: #1e3a5f; color: white; border: none; border-radius: 5px; cursor: pointer;">🖨️ Imprimir</button>
+                            <button onclick="window.close()" style="padding: 10px 20px; background: #666; color: white; border: none; border-radius: 5px; cursor: pointer;">Cerrar</button>
+                        </div>
+                        <div class="copia-cliente">📋 COPIA PARA EL CLIENTE (Docente / Estudiante)</div>
+                        <div class="header">
+                            <h1>COMPROBANTE DE ${tipoMovimiento} DE MATERIALES</h1>
+                            <p>Taller de Mecánica Inacap</p>
+                            <p><strong>Folio: ${folio.folio}</strong> | Fecha: ${fechaFolio}</p>
+                            ${folio.folioOriginal ? `<p><strong>Folio original de salida:</strong> ${folio.folioOriginal}</p>` : ''}
+                        </div>
+                        <div class="info-cliente">
+                            <p><strong>Cliente:</strong> ${folio.cliente}</p>
+                            <p><strong>Asignatura:</strong> ${folio.asignatura || '—'} | <strong>Carrera:</strong> ${folio.carrera || '—'}</p>
+                            <p><strong>Registrado por:</strong> ${folio.registradoPor || '—'}</p>
+                            ${folio.observacion ? `<p><strong>Observación:</strong> ${folio.observacion}</p>` : ''}
+                        </div>
+                        <h3>Materiales ${folio.tipo === 'devolucion' ? 'devueltos' : 'retirados'}:</h3>
+                        <table><thead><tr><th>#</th><th>Código</th><th>Material</th><th>Cantidad</th><th>Unidad</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+                        <div class="firmas"><div class="firma"><div class="firma-linea"></div>Firma Cliente<br>${folio.cliente}</div>
+                        <div class="firma"><div class="firma-linea"></div>Firma Encargado<br>${folio.registradoPor || 'Encargado'}</div></div>
+                        <div class="page-break"></div>
+                        <div class="copia-respaldo">📋 COPIA DE RESPALDO (Taller de Mecánica - Archivo)</div>
+                        <div class="header">
+                            <h1>COMPROBANTE DE ${tipoMovimiento} DE MATERIALES</h1>
+                            <p>Taller de Mecánica Inacap</p>
+                            <p><strong>Folio: ${folio.folio}</strong> | Fecha: ${fechaFolio}</p>
+                            <p style="color: red;">⚠️ COPIA DE PAÑOLERO</p>
+                            ${folio.folioOriginal ? `<p><strong>Folio original de salida:</strong> ${folio.folioOriginal}</p>` : ''}
+                        </div>
+                        <div class="info-cliente">
+                            <p><strong>Cliente:</strong> ${folio.cliente}</p>
+                            <p><strong>Asignatura:</strong> ${folio.asignatura || '—'} | <strong>Carrera:</strong> ${folio.carrera || '—'}</p>
+                            <p><strong>Registrado por:</strong> ${folio.registradoPor || '—'}</p>
+                            ${folio.observacion ? `<p><strong>Observación:</strong> ${folio.observacion}</p>` : ''}
+                        </div>
+                        <h3>Materiales ${folio.tipo === 'devolucion' ? 'devueltos' : 'retirados'}:</h3>
+                        <table><thead><tr><th>#</th><th>Código</th><th>Material</th><th>Cantidad</th><th>Unidad</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+                        <div class="firmas"><div class="firma"><div class="firma-linea"></div>Firma Cliente<br>${folio.cliente}</div>
+                        <div class="firma"><div class="firma-linea"></div>Firma Encargado<br>${folio.registradoPor || 'Encargado'}</div></div>
+                    </body>
+                    </html>
+                `);
+                ventanaImpresion.document.close();
+            };
+
+            window.cerrarDetalleMovimiento = function() {
+                document.getElementById('detalleMovimientoOverlay').style.display = 'none';
+            };
+
+            document.getElementById('detalleMovimientoOverlay').addEventListener('click', function(e) {
+                if (e.target === this) this.style.display = 'none';
+            });
+
+            window.editarProducto = function(codigo) {
+                const prod = productos.find(p => p.codigo === codigo);
+                if (!prod) return;
+                const nuevoMin = prompt(`Editar stock mínimo para ${codigo} (actual ${prod.stockMin})`, prod.stockMin);
+                if (nuevoMin !== null && !isNaN(parseInt(nuevoMin))) prod.stockMin = Math.max(0, parseInt(nuevoMin) || 0);
+                const nuevaUbicacion = prompt(`Ubicación (Pañol) para ${codigo}`, prod.ubicacion || '');
+                if (nuevaUbicacion !== null) prod.ubicacion = nuevaUbicacion;
+                const nuevaFecha = prompt(`Fecha de vencimiento para ${codigo} (YYYY-MM-DD) - Dejar vacío:`, prod
+                    .fechaVencimiento || '');
+                if (nuevaFecha !== null) {
+                    if (nuevaFecha.trim() === '') prod.fechaVencimiento = '';
+                    else if (/^\d{4}-\d{2}-\d{2}$/.test(nuevaFecha.trim())) prod.fechaVencimiento = nuevaFecha.trim();
+                    else alert('Formato inválido');
+                }
+                guardarProductos();
+                actualizarTablaYStats();
+                actualizarDatalist();
+            };
+
+            window.cargarMovimientoRapido = function(codigo, tipo) {
+                document.querySelectorAll('.movement-option').forEach(opt => {
+                    opt.classList.remove('active');
+                    if (opt.dataset.type === tipo) opt.classList.add('active');
+                });
+                movimientoActual = tipo;
+                document.getElementById('codigoInput').value = codigo;
+                actualizarPreview(codigo);
+                document.getElementById('cantidadMov').value = 1;
+                actualizarVisibilidadCampos();
+            };
+
+            window.mostrarFichaProducto = function(codigo) {
+                const prod = productos.find(p => p.codigo === codigo);
+                if (!prod) return;
+                productoSeleccionadoFicha = prod;
+                document.getElementById('fichaCodigoDisplay').innerText = prod.codigo;
+                document.getElementById('fichaNombreDisplay').innerText = prod.material;
+                const canvas = document.getElementById('barcodeCanvas');
+                try {
+                    JsBarcode(canvas, prod.codigo, { format: "CODE128", width: 1.5, height: 60, displayValue: true,
+                        fontSize: 14 });
+                } catch (e) {}
+                document.getElementById('fichaModal').style.display = 'flex';
+            };
+
+            function descargarFichaComoPNG() {
+                if (!productoSeleccionadoFicha) return;
+                const canvas = document.getElementById('barcodeCanvas');
+                const offscreen = document.createElement('canvas');
+                const ctx = offscreen.getContext('2d');
+                offscreen.width = 480;
+                offscreen.height = 260;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, 480, 260);
+                ctx.fillStyle = '#0b2b4a';
+                ctx.font = 'bold 32px "Courier New", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(productoSeleccionadoFicha.codigo, 240, 55);
+                ctx.font = '11px "Calibri", sans-serif';
+                ctx.fillStyle = '#334155';
+                ctx.fillText(productoSeleccionadoFicha.material.toUpperCase(), 240, 85);
+                ctx.drawImage(canvas, 60, 100, 360, 100);
+                const link = document.createElement('a');
+                link.download = `ficha_${productoSeleccionadoFicha.codigo}.png`;
+                link.href = offscreen.toDataURL('image/png');
+                link.click();
+            }
+
+            function renderizarListaProductos() {
+                const contenedor = document.getElementById('listaProductosAgregados');
+                const contadorSpan = document.getElementById('contadorProductos');
+                const resumenDiv = document.getElementById('resumenExistencias');
+                if (!contenedor || !contadorSpan || !resumenDiv) return;
+                contadorSpan.textContent = productosAMover.length;
+                if (productosAMover.length === 0) {
+                    resumenDiv.style.display = 'none';
+                    return;
+                }
+                resumenDiv.style.display = 'block';
+                contenedor.innerHTML = '';
+                productosAMover.forEach((item, index) => {
+                    const prod = productos.find(p => p.codigo === item.codigo);
+                    if (!prod) return;
+                    const stockActual = prod.stock;
+                    let nuevaCantidad;
+                    if (item.tipo === 'devolucion') {
+                        nuevaCantidad = stockActual + item.cantidad;
+                    } else {
+                        nuevaCantidad = item.tipo === 'entrada' ? stockActual + item.cantidad : stockActual - item.cantidad;
+                    }
+                    const colorCambio = (item.tipo === 'entrada' || item.tipo === 'devolucion') ? '#16a34a' : '#dc2626';
+                    const signo = (item.tipo === 'entrada' || item.tipo === 'devolucion') ? '+' : '-';
+                    const div = document.createElement('div');
+                    div.className = 'producto-lista-item';
+                    div.innerHTML = `
+                        <div class="producto-lista-info">
+                            <span class="producto-lista-nombre">${prod.codigo} - ${prod.material.substring(0, 30)}</span>
+                            <span class="producto-lista-stock">Stock: ${stockActual} → <span style="color: ${colorCambio};">${nuevaCantidad} (${signo}${item.cantidad})</span></span>
+                        </div>
+                        <div class="producto-lista-actions">
+                            <button class="btn-small remove" onclick="eliminarProductoDeLista(${index})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    contenedor.appendChild(div);
+                });
+            }
+
+            function agregarProductoALista() {
+                const codigo = document.getElementById('codigoInput').value.trim();
+                if (!codigo) { alert('Ingrese un código de producto.');
+                    return; }
+                const producto = productos.find(p => p.codigo === codigo);
+                if (!producto) { alert('Código no encontrado.');
+                    return; }
+                const cantidad = parseInt(document.getElementById('cantidadMov').value);
+                if (isNaN(cantidad) || cantidad <= 0) { alert('Cantidad válida');
+                    return; }
+                if (movimientoActual === 'salida' && producto.stock < cantidad) {
+                    alert(`Stock insuficiente. Stock actual: ${producto.stock}`);
+                    return;
+                }
+                const existente = productosAMover.findIndex(item => item.codigo === codigo);
+                if (existente >= 0) {
+                    productosAMover[existente].cantidad += cantidad;
+                    if (movimientoActual === 'salida' && producto.stock < productosAMover[existente].cantidad) {
+                        alert(`Stock insuficiente para cantidad total.`);
+                        productosAMover[existente].cantidad -= cantidad;
+                        return;
+                    }
+                } else {
+                    productosAMover.push({
+                        codigo: codigo,
+                        tipo: movimientoActual,
+                        cantidad: cantidad,
+                        material: producto.material,
+                        unidad: producto.unidad,
+                        ubicacion: document.getElementById('ubicacionInput').value,
+                        stockMin: parseInt(document.getElementById('stockMinInput').value) || 1,
+                        fechaVencimiento: document.getElementById('fechaVencimientoInput').value
+                    });
+                }
+                document.getElementById('codigoInput').value = '';
+                document.getElementById('materialPreview').value = '';
+                document.getElementById('unidadPreview').value = '';
+                document.getElementById('cantidadMov').value = 1;
+                document.getElementById('codigoInput').focus();
+                renderizarListaProductos();
+            }
+
+            window.eliminarProductoDeLista = function(index) {
+                if (index >= 0 && index < productosAMover.length) {
+                    productosAMover.splice(index, 1);
+                    renderizarListaProductos();
+                }
+            };
+
+            // NUEVO: Función para actualizar visibilidad de campos según tipo de movimiento
+            function actualizarVisibilidadCampos() {
+                const clienteGroup = document.getElementById('clienteGroup');
+                const folioOriginalGroup = document.getElementById('folioOriginalGroup');
+                const clienteInput = document.getElementById('clienteNombre');
+                
+                if (movimientoActual === 'devolucion') {
+                    clienteGroup.style.display = 'block';
+                    folioOriginalGroup.style.display = 'block';
+                    clienteInput.required = true;
+                } else if (movimientoActual === 'salida') {
+                    clienteGroup.style.display = 'block';
+                    folioOriginalGroup.style.display = 'none';
+                    clienteInput.required = true;
+                } else {
+                    clienteGroup.style.display = 'block';
+                    folioOriginalGroup.style.display = 'none';
+                    clienteInput.required = false;
+                }
+            }
+
+            function registrarFolio(e) {
+                e.preventDefault();
+                const cliente = document.getElementById('clienteNombre').value.trim();
+                if (!cliente && movimientoActual !== 'entrada') { alert('Ingrese el nombre del cliente (Docente/Estudiante)');
+                    return; }
+                if (productosAMover.length === 0) { alert('Agregue al menos un producto al folio');
+                    return; }
+                const asignatura = document.getElementById('asignatura').value;
+                const carrera = document.getElementById('carrera').value;
+                const registradoPor = document.getElementById('registradoPor').value || 'Mariela Muñoz';
+                const observacion = document.getElementById('observacion').value;
+                const fechaActual = new Date().toISOString().slice(0, 10);
+                const nuevoFolio = generarNuevoFolio();
+                let folioOriginal = null;
+                
+                if (movimientoActual === 'devolucion') {
+                    folioOriginal = document.getElementById('folioOriginalSelect').value;
+                    if (!folioOriginal) {
+                        alert('Debe seleccionar el folio original de salida para la devolución.');
+                        return;
+                    }
+                }
+                
+                let errorStock = false;
+                for (const item of productosAMover) {
+                    const prod = productos.find(p => p.codigo === item.codigo);
+                    if (item.tipo === 'salida' && prod && prod.stock < item.cantidad) {
+                        alert(
+                            `Stock insuficiente: ${prod.codigo} - ${prod.material}. Stock: ${prod.stock}, solicitado: ${item.cantidad}`
+                            );
+                        errorStock = true;
+                        break;
+                    }
+                }
+                if (errorStock) return;
+                for (const item of productosAMover) {
+                    const prod = productos.find(p => p.codigo === item.codigo);
+                    if (prod) {
+                        if (item.tipo === 'entrada' || item.tipo === 'devolucion') {
+                            prod.stock += item.cantidad;
+                        } else {
+                            prod.stock -= item.cantidad;
+                        }
+                        if (item.ubicacion) prod.ubicacion = item.ubicacion;
+                        if (item.stockMin !== undefined) prod.stockMin = item.stockMin;
+                        if (item.fechaVencimiento) prod.fechaVencimiento = item.fechaVencimiento;
+                    }
+                }
+                const folio = {
+                    folio: nuevoFolio,
+                    fecha: fechaActual,
+                    cliente: cliente || 'Inventario General',
+                    asignatura: asignatura,
+                    carrera: carrera,
+                    registradoPor: registradoPor,
+                    observacion: observacion,
+                    tipo: movimientoActual === 'devolucion' ? 'devolucion' : 'salida',
+                    folioOriginal: folioOriginal,
+                    items: productosAMover.map(item => ({
+                        codigo: item.codigo,
+                        material: item.material,
+                        cantidad: item.cantidad,
+                        unidad: item.unidad
+                    }))
+                };
+                folios.push(folio);
+                guardarProductos();
+                guardarFolios();
+                actualizarTablaYStats();
+                productosAMover = [];
+                document.getElementById('clienteNombre').value = '';
+                document.getElementById('asignatura').value = '';
+                document.getElementById('carrera').value = '';
+                document.getElementById('observacion').value = '';
+                if (movimientoActual === 'devolucion') {
+                    document.getElementById('folioOriginalSelect').value = '';
+                }
+                renderizarListaProductos();
+                setTimeout(() => mostrarComprobanteFolio(folio), 300);
+            }
+
+            function registrarEntrada(e) {
+                e.preventDefault();
+                const codigo = document.getElementById('codigoInput').value.trim();
+                if (!codigo) { alert('Ingrese código');
+                    return; }
+                let producto = productos.find(p => p.codigo === codigo);
+                if (!producto) { alert('Producto no encontrado');
+                    return; }
+                const cantidad = parseInt(document.getElementById('cantidadMov').value);
+                if (cantidad <= 0) { alert('Cantidad inválida');
+                    return; }
+                const ubicacion = document.getElementById('ubicacionInput').value;
+                if (ubicacion) producto.ubicacion = ubicacion;
+                const stockMin = parseInt(document.getElementById('stockMinInput').value);
+                if (!isNaN(stockMin) && stockMin >= 0) producto.stockMin = stockMin;
+                const fechaVencimiento = document.getElementById('fechaVencimientoInput').value;
+                if (fechaVencimiento) producto.fechaVencimiento = fechaVencimiento;
+                producto.stock += cantidad;
+                guardarProductos();
+                actualizarTablaYStats();
+                document.getElementById('codigoInput').value = '';
+                document.getElementById('materialPreview').value = '';
+                document.getElementById('unidadPreview').value = '';
+                document.getElementById('cantidadMov').value = 1;
+                document.getElementById('fechaVencimientoInput').value = '';
+                alert(`Entrada registrada: +${cantidad} ${producto.material}`);
+            }
+
+            function onSubmitMovimiento(e) {
+                if (movimientoActual === 'entrada') {
+                    registrarEntrada(e);
+                } else {
+                    registrarFolio(e);
+                }
+            }
+
+            function crearNuevoProducto() {
+                const codigo = prompt('Código único:');
+                if (!codigo || productos.some(p => p.codigo === codigo)) { alert('Código inválido o ya existe');
+                    return; }
+                const material = prompt('Nombre del material:');
+                if (!material) return;
+                const unidad = prompt('Unidad:', 'UN');
+                const ubicacion = prompt('Ubicación:', 'A-1');
+                const stockMin = parseInt(prompt('Stock mínimo:', '1') || '1');
+                const stockInicial = parseInt(prompt('Stock inicial:', '0') || '0');
+                const tieneVencimiento = confirm('¿Tiene fecha de vencimiento?');
+                let fechaVencimiento = '';
+                if (tieneVencimiento) fechaVencimiento = prompt('Fecha (YYYY-MM-DD):', '');
+                productos.push({
+                    codigo,
+                    material,
+                    unidad: unidad || 'UN',
+                    ubicacion: ubicacion || 'A-1',
+                    stockMin: Math.max(0, stockMin),
+                    stock: Math.max(0, stockInicial),
+                    fechaVencimiento: fechaVencimiento || ''
+                });
+                guardarProductos();
+                actualizarTablaYStats();
+                actualizarDatalist();
+            }
+
+            function calcularRotacion() {
+                const totalMovsPorCodigo = {};
+                folios.forEach(folio => {
+                    folio.items.forEach(item => {
+                        totalMovsPorCodigo[item.codigo] = (totalMovsPorCodigo[item.codigo] || 0) + item
+                            .cantidad;
+                    });
+                });
+                const rotaciones = productos.map(prod => {
+                    const totalMov = totalMovsPorCodigo[prod.codigo] || 0;
+                    let nivel = 'Baja';
+                    if (totalMov >= 8) nivel = 'Alta';
+                    else if (totalMov >= 3) nivel = 'Media';
+                    return { ...prod, totalMovimientos: totalMov, rotacion: nivel };
+                });
+                return rotaciones.sort((a, b) => b.totalMovimientos - a.totalMovimientos);
+            }
+
+            function mostrarReporteRotacion() {
+                const datos = calcularRotacion();
+                let mensaje = '📊 REPORTE DE ROTACIÓN\n\n';
+                datos.forEach(p => {
+                    mensaje +=
+                        `${p.codigo} - ${p.material.substring(0,30)} | Salidas: ${p.totalMovimientos} | Rotación: ${p.rotacion} | Stock: ${p.stock}\n`;
+                });
+                alert(mensaje);
+            }
+
+            function exportarAExcel() {
+                const datosRotacion = calcularRotacion();
+                const dataParaExcel = datosRotacion.map(p => ({
+                    Código: p.codigo,
+                    Material: p.material,
+                    Unidad: p.unidad,
+                    Ubicación: p.ubicacion,
+                    'Stock Mínimo': p.stockMin,
+                    'Stock Actual': p.stock,
+                    'Total Salidas': p.totalMovimientos,
+                    Rotación: p.rotacion
+                }));
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(dataParaExcel);
+                XLSX.utils.book_append_sheet(wb, ws, "Rotacion_Inventario");
+                XLSX.writeFile(wb, `Reporte_Inventario_${new Date().toISOString().slice(0,10)}.xlsx`);
+            }
+
+            function generarReporteFolios() {
+                const fechaDesde = document.getElementById('filtroFechaDesde').value;
+                const fechaHasta = document.getElementById('filtroFechaHasta').value;
+                const clienteFiltro = document.getElementById('filtroClienteModal').value.toLowerCase();
+                let foliosFiltrados = [...folios];
+                if (fechaDesde) foliosFiltrados = foliosFiltrados.filter(f => f.fecha >= fechaDesde);
+                if (fechaHasta) foliosFiltrados = foliosFiltrados.filter(f => f.fecha <= fechaHasta);
+                if (clienteFiltro) foliosFiltrados = foliosFiltrados.filter(f => f.cliente.toLowerCase().includes(
+                    clienteFiltro));
+                if (foliosFiltrados.length === 0) { alert('No hay folios con esos filtros');
+                    return; }
+                let contenidoHtml = generarHtmlReporteFolios(foliosFiltrados);
+                const ventana = window.open('', '_blank', 'width=800,height=600');
+                ventana.document.write(contenidoHtml);
+                ventana.document.close();
+            }
+
+            function generarHtmlReporteFolios(foliosLista) {
+                let filas = '';
+                foliosLista.forEach(folio => {
+                    let itemsStr = '';
+                    folio.items.forEach(item => { itemsStr +=
+                            `${item.codigo}: ${item.cantidad} ${item.unidad}, `; });
+                    itemsStr = itemsStr.slice(0, -2);
+                    const tipo = folio.tipo === 'devolucion' ? 'DEVOLUCIÓN' : 'SALIDA';
+                    filas +=
+                        `<tr><td>${folio.folio}</td><td>${folio.fecha}</td><td>${tipo}</td><td>${folio.cliente}</td><td>${folio.asignatura || '—'}</td><td>${folio.carrera || '—'}</td><td>${itemsStr}</td><td>${folio.registradoPor || '—'}</td></tr>`;
+                });
+                return `<!DOCTYPE html>
+                <html><head><meta charset="UTF-8"><title>Reporte Folios</title>
+                <style>body{font-family:Arial;margin:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#1e3a5f;color:#fff}@media print{body{margin:0;padding:10px}th{background:#1e3a5f!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+                </head><body><h1>Reporte de Folios - Taller Mecánica Inacap</h1><p>Generado: ${new Date().toLocaleString()}</p>
+                <table><thead><tr><th>Folio</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Asignatura</th><th>Carrera</th><th>Materiales</th><th>Registrado por</th></tr></thead><tbody>${filas}</tbody></table>
+                </body></html>`;
+            }
+
+            function mostrarModalDescarga() {
+                const hoy = new Date();
+                const haceUnMes = new Date();
+                haceUnMes.setMonth(haceUnMes.getMonth() - 1);
+                document.getElementById('filtroFechaDesde').value = haceUnMes.toISOString().slice(0, 10);
+                document.getElementById('filtroFechaHasta').value = hoy.toISOString().slice(0, 10);
+                document.getElementById('filtroClienteModal').value = '';
+                document.getElementById('modalDescargaRegistros').style.display = 'flex';
+            }
+
+            function actualizarTablaYStats() {
+                renderTabla(document.getElementById('searchInput')?.value || '');
+                renderizarHistorialFolios();
+            }
+
+            function init() {
+                cargarDatos();
+                setupBarcodeListener();
+                document.querySelectorAll('.movement-option').forEach(opt => opt.addEventListener('click', function() {
+                    document.querySelectorAll('.movement-option').forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    movimientoActual = this.dataset.type;
+                    actualizarVisibilidadCampos();
+                    if (movimientoActual === 'devolucion') {
+                        document.getElementById('clienteNombre').required = true;
+                    } else if (movimientoActual === 'salida') {
+                        document.getElementById('clienteNombre').required = true;
+                    } else {
+                        document.getElementById('clienteNombre').required = false;
+                    }
+                }));
+                document.getElementById('codigoInput').addEventListener('input', e => actualizarPreview(e.target.value
+                    .trim()));
+                document.getElementById('movementForm').addEventListener('submit', onSubmitMovimiento);
+                document.getElementById('newProductBtn').addEventListener('click', crearNuevoProducto);
+                document.getElementById('searchInput').addEventListener('input', e => renderTabla(e.target.value));
+                document.getElementById('generateReportBtn').addEventListener('click', mostrarReporteRotacion);
+                document.getElementById('exportExcelBtn').addEventListener('click', exportarAExcel);
+                document.getElementById('agregarProductoBtn').addEventListener('click', agregarProductoALista);
+                document.getElementById('descargarRegistrosBtn').addEventListener('click', mostrarModalDescarga);
+                document.getElementById('generarPDFRegistros').addEventListener('click', generarReporteFolios);
+                document.getElementById('cerrarModalDescarga').addEventListener('click', () => document.getElementById(
+                    'modalDescargaRegistros').style.display = 'none');
+                document.getElementById('cerrarDetalleFolioBtn').addEventListener('click', () => document.getElementById(
+                    'modalDetalleFolio').style.display = 'none');
+                document.getElementById('descargarFichaBtn').addEventListener('click', descargarFichaComoPNG);
+                document.getElementById('cerrarModalBtn').addEventListener('click', () => document.getElementById(
+                    'fichaModal').style.display = 'none');
+                document.getElementById('filtroCliente').addEventListener('input', () => renderizarHistorialFolios());
+                document.getElementById('filtroFolio').addEventListener('input', () => renderizarHistorialFolios());
+                
+                // NUEVO: Evento para el selector de folio original
+                document.getElementById('folioOriginalSelect').addEventListener('change', function() {
+                    cargarDatosFolioDevolucion(this.value);
+                });
+                
+                document.getElementById('modalDetalleFolio').addEventListener('click', (e) => { if (e.target.classList
+                        .contains('modal-overlay')) e.target.style.display = 'none'; });
+                document.getElementById('modalDescargaRegistros').addEventListener('click', (e) => { if (e.target.classList
+                        .contains('modal-overlay')) e.target.style.display = 'none'; });
+                document.getElementById('fichaModal').addEventListener('click', (e) => { if (e.target.classList.contains(
+                        'modal-overlay')) e.target.style.display = 'none'; });
+                renderizarListaProductos();
+                actualizarVisibilidadCampos();
+            }
+            init();
+        })();
+    </script>
+</body>
+</html>
